@@ -14,6 +14,7 @@ import '../widgets/app_button.dart';
 import '../widgets/custom_appbar.dart';
 import '../widgets/custom_drawer.dart';
 import '../widgets/view_toggle.dart';
+import 'home_screen.dart';
 
 enum DisplayMode {
   fit,
@@ -156,13 +157,34 @@ class _NatureScreenState extends State<NatureScreen> {
     return Scaffold(
       backgroundColor: WColors.backgroundColor,
       key: _scaffoldKey,
+      // endDrawer: CustomDrawer(
+      //   pages: _dataService.pages,
+      //   // selectedIndex: widget.selectedIndex,
+      //   selectedIndex: _selectedIndex,
+      //   onItemSelected: (index) => setState(() {
+      //     _selectedIndex = index;
+      //   }
+      //   ),
+      //   getIcon: (index, isSelected) =>
+      //       IconService.getIcon(index, isSelected: isSelected),
+      // ),
       endDrawer: CustomDrawer(
         pages: _dataService.pages,
-        // selectedIndex: widget.selectedIndex,
         selectedIndex: _selectedIndex,
-        onItemSelected: (index) => setState(() {
-          _selectedIndex = index;
-        }),
+        onItemSelected: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+
+          // Navigate back to HomeScreen when a different nav item is selected
+          if (index != widget.selectedIndex) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => HomeScreen()),
+              (route) => false,
+            );
+          }
+        },
         getIcon: (index, isSelected) =>
             IconService.getIcon(index, isSelected: isSelected),
       ),
@@ -180,9 +202,23 @@ class _NatureScreenState extends State<NatureScreen> {
               isDesktop: isDesktop,
               selectedIndex: widget.selectedIndex,
               pages: _dataService.pages,
-              onItemSelected: (index) => setState(() {
-                _selectedIndex = index;
-              }),
+              // onItemSelected: (index) => setState(() {
+              //   _selectedIndex = index;
+              // }),
+              onItemSelected: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+
+                // Navigate back to HomeScreen when a different nav item is selected
+                if (index != widget.selectedIndex) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => HomeScreen()),
+                    (route) => false,
+                  );
+                }
+              },
               onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
               scaffoldKey: _scaffoldKey,
               getIcon: (index, isSelected) =>

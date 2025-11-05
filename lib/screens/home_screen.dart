@@ -134,8 +134,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ? _buildHomeContent(isMobile, isTablet, isDesktop)
             : _buildHomeContentList(isMobile, isTablet, isDesktop);
       case 2:
-        // return _buildFavouriteScreen(isMobile, isTablet, isDesktop);
-        // return _buildEmptyFavoriteScreen();
         return _favoriteNatures.isEmpty
             ? _buildEmptyFavoriteScreen()
             : _buildFavouriteScreen(isMobile, isTablet, isDesktop);
