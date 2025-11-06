@@ -26,7 +26,7 @@ https://drive.google.com/drive/folders/1MjdKBjrGOQWsxufQ1XRsKeKjBn660zAc?usp=sha
 
 🎥 Demo Video
 Watch the demo of the app in action here:
-https://drive.google.com/file/d/1VcQ-RobCxH07oRYYU17nkXb3YEg6JAW4/view?usp=sharing
+https://drive.google.com/file/d/1hqqt8_NJXD9lNIaZ3Gs9xpk5GHvRZwmD/view?usp=sharing
 
 💾 GitHub Repository
 https://github.com/mine0059/wallpaper_studio
