@@ -1,16 +1,41 @@
 # wallpaper_studio
 
-A new Flutter project.
+---
 
-## Getting Started
+## 🧩 Tech Stack
 
-This project is a starting point for a Flutter application.
+| Technology | Purpose |
+|-------------|----------|
+| **Flutter** | App framework |
+| **Dart** | Programming language |
 
-A few resources to get you started if this is your first Flutter project:
+## ⚙️ Setup Instructions
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### 1️⃣ Clone this repository
+```bash
+git clone https://github.com/mine0059/wallpaper_studio.git
+cd wallpaper_studio
+### 2️⃣ Install dependencies
+flutter pub get
+### 3️⃣ Run the app
+flutter run
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+📦 Release exe destop.
+You can directly download and test the destop app using the link below 👇
+https://drive.google.com/drive/folders/1MjdKBjrGOQWsxufQ1XRsKeKjBn660zAc?usp=sharing
+
+🎥 Demo Video
+Watch the demo of the app in action here:
+https://drive.google.com/file/d/1VcQ-RobCxH07oRYYU17nkXb3YEg6JAW4/view?usp=sharing
+
+💾 GitHub Repository
+https://github.com/mine0059/wallpaper_studio
+
+🧑‍💻 Developer
+Name: Oghenemine Emmanuel
+Email: oghenemineemma@gmail.com
+GitHub: @mine0059
+
+🪶 License
+
+This project is open-source and available under the MIT License
