@@ -226,7 +226,9 @@ class _NatureScreenState extends State<NatureScreen> {
             ),
             Expanded(
                 child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: isDesktop
+                  ? const EdgeInsets.symmetric(horizontal: 35)
+                  : const EdgeInsets.symmetric(horizontal: 16),
               child: _buildNatureScreenContent(isMobile, isTablet, isDesktop),
             )),
           ],
@@ -719,6 +721,7 @@ class _NatureScreenState extends State<NatureScreen> {
           },
           separatorBuilder: (context, index) => const SizedBox(height: 16),
         ),
+        const SizedBox(height: 20),
       ],
     );
   }
