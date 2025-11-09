@@ -80,7 +80,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   IconService.getIcon(index, isSelected: isSelected),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: isDesktop
+                  ? const EdgeInsets.symmetric(horizontal: 35)
+                  : const EdgeInsets.symmetric(horizontal: 16),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 870),
                 child: Column(
@@ -115,7 +117,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: isDesktop
+                    ? const EdgeInsets.symmetric(horizontal: 35)
+                    : const EdgeInsets.symmetric(horizontal: 16),
                 child: _buildPageContent(isMobile, isTablet, isDesktop),
               ),
             ),
