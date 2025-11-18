@@ -640,13 +640,16 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chart_sparkline/chart_sparkline.dart';
 import 'package:flutter/material.dart';
+import 'package:wallpaper_studio/core/services/cache_service.dart';
 
 import '../core/common/constants/crypto_colors.dart';
 import '../core/common/widgets/appbar.dart';
 import 'package:http/http.dart' as http;
 
+import '../mobile/chat_model.dart';
 import '../mobile/coin_model.dart';
 import 'coin_details_screen.dart';
 
@@ -662,8 +665,9 @@ class _CryptoHomeScreenState extends State<CryptoHomeScreen> {
   final ValueNotifier<double> _sheetSize = ValueNotifier<double>(0.4);
   List<CoinModel> coinMarket = [];
   bool isLoading = true;
+  bool _isOffline = false;
 
-  Future<void> getCoinMarket() async {
+  Future<void> getCoinMarket({bool forceRefresh = false}) async {
     const url =
         'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=true';
 
@@ -671,38 +675,100 @@ class _CryptoHomeScreenState extends State<CryptoHomeScreen> {
       isLoading = true;
     });
 
+    if (!forceRefresh && CacheService.hasCache) {
+      final cached = await CacheService.getCachedCoins();
+      setState(() {
+        coinMarket = cached;
+        isLoading = false;
+      });
+
+      if (await CacheService.shouldUseCache()) {
+        debugPrint('Using fresh cache');
+        return;
+      }
+    }
+
     try {
       var response =
           await http.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         List<dynamic> jsonList = json.decode(response.body);
-        debugPrint('Fetched ${jsonList.length} coins');
+        final List<CoinModel> coins =
+            jsonList.map((json) => CoinModel.fromJson(json)).toList();
 
         setState(() {
-          coinMarket =
-              jsonList.map((json) => CoinModel.fromJson(json)).toList();
+          coinMarket = coins;
           isLoading = false;
+          _isOffline = false;
         });
+
+        await CacheService.cacheCoins(coins);
+        debugPrint('Fetched ${coins.length} coins');
+
+        await _preCacheCharts(coins);
+        return;
       } else {
-        debugPrint('Error: ${response.statusCode}');
-        setState(() => isLoading = false);
+        debugPrint('Error from Response');
       }
     } on TimeoutException {
       debugPrint('Request timed out');
-      setState(() => isLoading = false);
+      setState(() => _isOffline = true);
     } on SocketException {
-      debugPrint('No internet connection');
-      setState(() => isLoading = false);
+      debugPrint('No internet');
+      setState(() => _isOffline = true);
     } catch (e) {
-      debugPrint('Exception: $e');
-      setState(() => isLoading = false);
+      debugPrint('Error: $e');
     }
+
+    if (CacheService.hasCache) {
+      final cached = await CacheService.getCachedCoins();
+      setState(() {
+        coinMarket = cached;
+        isLoading = false;
+      });
+      debugPrint('Network failed, loaded ${cached.length} from cache');
+    } else {
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet & no cache')),
+      );
+    }
+  }
+
+  Future<void> _preCacheCharts(List<CoinModel> coins) async {
+    final topCoins = coins.take(5).toList(); // Cache top 5 coins
+    final daysList = ['1', '7']; // Cache 1H and 7D
+
+    debugPrint('Pre-caching ${topCoins.length} coins...');
+
+    for (final coin in topCoins) {
+      for (final days in daysList) {
+        await _cacheChartForCoin(coin.id, days);
+        await Future.delayed(const Duration(milliseconds: 600));
+      }
+    }
+  }
+
+  Future<void> _cacheChartForCoin(String coinId, String days) async {
+    final url =
+        'https://api.coingecko.com/api/v3/coins/$coinId/ohlc?vs_currency=usd&days=$days';
+    try {
+      final response =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        final modelList = data.map((e) => ChartModel.fromJson(e)).toList();
+        await CacheService.cacheChart(coinId, days, modelList);
+        debugPrint('Pre-cached $coinId $days: ${modelList.length} points');
+      }
+    } catch (e) {}
   }
 
   @override
   void initState() {
     super.initState();
+    CacheService.init();
     _controller = DraggableScrollableController();
     getCoinMarket();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -772,7 +838,7 @@ class _CryptoHomeScreenState extends State<CryptoHomeScreen> {
                       ),
                     ),
                     child: RefreshIndicator(
-                      onRefresh: getCoinMarket,
+                      onRefresh: () => getCoinMarket(forceRefresh: true),
                       child: CustomScrollView(
                         controller: scrollController,
                         physics: const ClampingScrollPhysics(),
@@ -785,6 +851,40 @@ class _CryptoHomeScreenState extends State<CryptoHomeScreen> {
                             ),
                           ),
                           const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                          SliverToBoxAdapter(
+                            child: Visibility(
+                              visible: _isOffline && coinMarket.isNotEmpty,
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade50,
+                                  border:
+                                      Border.all(color: Colors.orange.shade300),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.cloud_off,
+                                        size: 16,
+                                        color: Colors.orange.shade700),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Offline Mode',
+                                      style: TextStyle(
+                                        color: Colors.orange.shade700,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                           isLoading
                               ? const SliverFillRemaining(
                                   child: Center(
@@ -962,11 +1062,25 @@ class _CryptoHomeScreenState extends State<CryptoHomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            Image.network(
-              coin.image,
+            // Image.network(
+            //   coin.image,
+            //   width: 40,
+            //   height: 40,
+            //   errorBuilder: (_, __, ___) => const Icon(Icons.error, size: 20),
+            // ),
+            CachedNetworkImage(
+              imageUrl: coin.image,
               width: 40,
               height: 40,
-              errorBuilder: (_, __, ___) => const Icon(Icons.error, size: 20),
+              placeholder: (context, url) => const SizedBox(
+                width: 40,
+                height: 40,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              errorWidget: (context, url, error) =>
+                  const Icon(Icons.error, size: 20),
+              memCacheWidth: 120, // Optional: cache smaller version
+              fadeInDuration: const Duration(milliseconds: 300),
             ),
             const SizedBox(width: 12),
             Expanded(
