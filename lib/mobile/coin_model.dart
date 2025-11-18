@@ -1,5 +1,10 @@
-class CoinModel {
-  const CoinModel({
+import 'package:hive/hive.dart';
+
+part 'coin_model.g.dart';
+
+@HiveType(typeId: 0)
+class CoinModel extends HiveObject {
+  CoinModel({
     required this.id,
     required this.symbol,
     required this.name,
@@ -29,32 +34,59 @@ class CoinModel {
     this.sparklineIn7d,
   });
 
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final String symbol;
+  @HiveField(2)
   final String name;
+  @HiveField(3)
   final String image;
+  @HiveField(4)
   final double currentPrice;
+  @HiveField(5)
   final double marketCap;
+  @HiveField(6)
   final int marketCapRank;
+  @HiveField(7)
   final double? fullyDilutedValuation;
+  @HiveField(8)
   final double totalVolume;
+  @HiveField(9)
   final double high24h;
+  @HiveField(10)
   final double low24h;
+  @HiveField(11)
   final double priceChange24h;
+  @HiveField(12)
   final double priceChangePercentage24h;
+  @HiveField(13)
   final double marketCapChange24h;
+  @HiveField(14)
   final double marketCapChangePercentage24h;
+  @HiveField(15)
   final double circulatingSupply;
+  @HiveField(16)
   final double totalSupply;
+  @HiveField(17)
   final double? maxSupply;
+  @HiveField(18)
   final double ath;
+  @HiveField(19)
   final double athChangePercentage;
+  @HiveField(20)
   final String athDate;
+  @HiveField(21)
   final double atl;
+  @HiveField(22)
   final double atlChangePercentage;
+  @HiveField(23)
   final String atlDate;
+  @HiveField(24)
   final RoiModel? roi;
+  @HiveField(25)
   final String lastUpdated;
+  @HiveField(26)
   final SparklineModel? sparklineIn7d;
 
   factory CoinModel.fromJson(Map<String, dynamic> json) {
@@ -214,6 +246,7 @@ class CoinModel {
 }
 
 // ROI Model
+@HiveType(typeId: 1)
 class RoiModel {
   const RoiModel({
     required this.times,
@@ -221,8 +254,11 @@ class RoiModel {
     required this.percentage,
   });
 
+  @HiveField(0)
   final double times;
+  @HiveField(1)
   final String currency;
+  @HiveField(2)
   final double percentage;
 
   factory RoiModel.fromJson(Map<String, dynamic> json) {
@@ -243,11 +279,13 @@ class RoiModel {
 }
 
 // Sparkline Model
+@HiveType(typeId: 2)
 class SparklineModel {
   const SparklineModel({
     required this.price,
   });
 
+  @HiveField(0)
   final List<double> price;
 
   factory SparklineModel.fromJson(Map<String, dynamic> json) {

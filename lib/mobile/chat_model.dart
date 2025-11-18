@@ -1,8 +1,27 @@
-class ChartModel {
-  final int? time;
-  final double? open, high, low, close;
+import 'package:hive/hive.dart';
 
-  ChartModel({this.time, this.open, this.high, this.low, this.close});
+part 'chat_model.g.dart';
+
+@HiveType(typeId: 3)
+class ChartModel {
+  @HiveField(0)
+  final int? time;
+  @HiveField(1)
+  final double? open;
+  @HiveField(2)
+  final double? high;
+  @HiveField(3)
+  final double? low;
+  @HiveField(4)
+  final double? close;
+
+  ChartModel({
+    this.time,
+    this.open,
+    this.high,
+    this.low,
+    this.close,
+  });
 
   factory ChartModel.fromJson(List<dynamic> json) {
     return ChartModel(
@@ -12,5 +31,15 @@ class ChartModel {
       low: (json[3] as num?)?.toDouble(),
       close: (json[4] as num?)?.toDouble(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'time': time,
+      'open': open,
+      'high': high,
+      'low': low,
+      'close': close,
+    };
   }
 }
