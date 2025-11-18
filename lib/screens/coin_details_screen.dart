@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:wallpaper_studio/widgets/crypto_button.dart';
 
 import '../core/common/widgets/appbar.dart';
+import '../core/services/cache_service.dart';
 
 class CoinDetailsScreen extends StatefulWidget {
   const CoinDetailsScreen({super.key, required this.coin});
@@ -31,29 +32,92 @@ class _CoinDetailsScreenState extends State<CoinDetailsScreen> {
     getChart();
   }
 
+  // Future<void> getChart() async {
+
+  //   final cachedChart =
+  //       await CacheService.getCachedChart(widget.coin.id, selectedDays);
+  //  debugPrint('Trying cache for ${widget.coin.id} $selectedDays: ${cachedChart?.length} items');
+  //   if (cachedChart != null && cachedChart.isNotEmpty) {
+  //     setState(() => charts = cachedChart);
+  //     debugPrint('Loaded from cache!');
+  //     return;
+  //   }
+
+  //   debugPrint('No cache, fetching ${widget.coin.id}...');
+  //   String url =
+  //       'https://api.coingecko.com/api/v3/coins/${widget.coin.id}/ohlc?vs_currency=usd&days=$selectedDays';
+
+  //   try {
+  //     var response = await http.get(Uri.parse(url));
+
+  //     if (response.statusCode == 200) {
+  //       Iterable x = json.decode(response.body);
+  //       List<ChartModel> modelList =
+  //           x.map((e) => ChartModel.fromJson(e)).toList();
+  //       setState(() {
+  //         charts = modelList;
+  //       });
+  //       await CacheService.cacheChart(widget.coin.id, selectedDays, modelList);
+  //       debugPrint('Fetched & cached ${modelList.length} points');
+  //     } else {
+  //       debugPrint('API error: ${response.statusCode}');
+  //     }
+  //   } on TimeoutException {
+  //     debugPrint('Request timed out');
+  //   } on SocketException {
+  //     debugPrint('No internet connection');
+  //   } catch (e) {
+  //     debugPrint('Exception: $e');
+  //   }
+  // }
+
   Future<void> getChart() async {
-    String url =
+    final cachedChart =
+        await CacheService.getCachedChart(widget.coin.id, selectedDays);
+    if (cachedChart != null && cachedChart.isNotEmpty) {
+      setState(() => charts = cachedChart);
+      debugPrint('Chart loaded from cache: ${cachedChart.length} points');
+      return;
+    }
+
+    debugPrint('No cache, fetching ${widget.coin.id}...');
+    final url =
         'https://api.coingecko.com/api/v3/coins/${widget.coin.id}/ohlc?vs_currency=usd&days=$selectedDays';
 
     try {
-      var response = await http.get(Uri.parse(url));
+      final response =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        Iterable x = json.decode(response.body);
-        List<ChartModel> modelList =
-            x.map((e) => ChartModel.fromJson(e)).toList();
-        setState(() {
-          charts = modelList;
-        });
-      } else {
-        debugPrint('Error: ${response.statusCode}');
+        final List<dynamic> data = json.decode(response.body);
+        final modelList = data.map((e) => ChartModel.fromJson(e)).toList();
+        setState(() => charts = modelList);
+        await CacheService.cacheChart(widget.coin.id, selectedDays, modelList);
+        debugPrint('Fetched & cached ${modelList.length} points');
+      } else if (response.statusCode == 429) {
+        debugPrint('Rate limited (429), using cache if available');
+        final fallback =
+            await CacheService.getCachedChart(widget.coin.id, selectedDays);
+        if (fallback != null && fallback.isNotEmpty) {
+          setState(() => charts = fallback);
+        }
+      }
+    } on SocketException {
+      debugPrint('No internet, trying cache...');
+      final fallback =
+          await CacheService.getCachedChart(widget.coin.id, selectedDays);
+      if (fallback != null && fallback.isNotEmpty) {
+        setState(() => charts = fallback);
       }
     } on TimeoutException {
-      debugPrint('Request timed out');
-    } on SocketException {
-      debugPrint('No internet connection');
+      debugPrint('Timeout, using cache...');
+      final fallback =
+          await CacheService.getCachedChart(widget.coin.id, selectedDays);
+      if (fallback != null && fallback.isNotEmpty) {
+        setState(() => charts = fallback);
+      }
     } catch (e) {
-      debugPrint('Exception: $e');
+      debugPrint('Error: $e');
     }
   }
 
